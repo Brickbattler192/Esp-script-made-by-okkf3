@@ -1,0 +1,158 @@
+-- Create the ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PlayerHighlighter"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Create the Activate Button
+local activateButton = Instance.new("TextButton")
+activateButton.Name = "ActivateButton"
+activateButton.Text = "Activate"
+activateButton.Size = UDim2.new(0, 200, 0, 50)
+activateButton.Position = UDim2.new(0.5, -100, 0.9, -25)
+activateButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+activateButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+activateButton.Parent = screenGui
+
+-- Create the Deactivate Button
+local deactivateButton = Instance.new("TextButton")
+deactivateButton.Name = "DeactivateButton"
+deactivateButton.Text = "Deactivate"
+deactivateButton.Size = UDim2.new(0, 200, 0, 50)
+deactivateButton.Position = UDim2.new(0.5, -100, 0.8, -25)
+deactivateButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+deactivateButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+deactivateButton.Parent = screenGui
+
+-- Table to store created highlights and billboard GUIs
+local highlights = {}
+local running = false
+local firstActivation = true
+
+-- Function to show a smooth notification with in-transition
+local function showNotification()
+    local notification = Instance.new("Frame")
+    notification.Size = UDim2.new(0, 300, 0, 70)
+    notification.Position = UDim2.new(1, 20, 1, -90) -- Off-screen position
+    notification.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Gray-black color
+    notification.BackgroundTransparency = 0.3 -- Slight transparency
+    notification.BorderSizePixel = 2
+    notification.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Red border
+    notification.Parent = screenGui
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 0.6, 0)
+    textLabel.Position = UDim2.new(0, 0, 0, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.Font = Enum.Font.GothamSemibold -- Modern font
+    textLabel.TextScaled = true
+    textLabel.Text = "Made by okkf3"
+    textLabel.Parent = notification
+
+    local subTextLabel = Instance.new("TextLabel")
+    subTextLabel.Size = UDim2.new(1, 0, 0.4, 0)
+    subTextLabel.Position = UDim2.new(0, 0, 0.6, 0)
+    subTextLabel.BackgroundTransparency = 1
+    subTextLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    subTextLabel.Font = Enum.Font.Gotham -- Smaller modern font
+    subTextLabel.TextScaled = true
+    subTextLabel.Text = "Script successfully loaded"
+    subTextLabel.Parent = notification
+
+    -- Smooth fade-in and slide-in animation
+    notification:TweenPosition(UDim2.new(1, -320, 1, -90), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 1, true)
+    notification.BackgroundTransparency = 1
+    for i = 1, 0, -0.1 do
+        wait(0.1)
+        notification.BackgroundTransparency = i
+    end
+
+    -- Fade out and remove notification after 3 seconds
+    wait(3)
+    notification:TweenPosition(UDim2.new(1, 20, 1, -90), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 1, true)
+    wait(1)
+    notification:Destroy()
+end
+
+-- Function to highlight players and show their HP and distance
+local function highlightPlayers()
+    if firstActivation then
+        showNotification()
+        firstActivation = false
+    end
+    
+    running = true
+    while running do
+        local localPlayer = game.Players.LocalPlayer
+        local playerChar = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+        local playerPos = playerChar:WaitForChild("HumanoidRootPart").Position
+
+        -- Clear previous highlights
+        for _, item in pairs(highlights) do
+            item:Destroy()
+        end
+        highlights = {}
+
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= localPlayer and player.Character then
+                local char = player.Character
+                local humanoid = char:FindFirstChild("Humanoid")
+                local head = char:FindFirstChild("Head")
+                local rootPart = char:FindFirstChild("HumanoidRootPart")
+
+                if humanoid and head and rootPart then
+                    -- Calculate distance
+                    local distance = (rootPart.Position - playerPos).Magnitude
+
+                    -- Highlight the player
+                    local highlight = Instance.new("Highlight")
+                    highlight.Parent = char
+                    highlight.FillColor = Color3.new(1, 0, 0)
+                    highlight.OutlineColor = Color3.new(1, 1, 1)
+                    table.insert(highlights, highlight)
+
+                    -- Create a BillboardGui to display HP and distance
+                    local billboardGui = Instance.new("BillboardGui")
+                    billboardGui.Size = UDim2.new(0, 200, 0, 40) -- Reduced size
+                    billboardGui.StudsOffset = Vector3.new(0, 3, 0)
+                    billboardGui.AlwaysOnTop = true
+                    billboardGui.Parent = head
+                    table.insert(highlights, billboardGui)
+
+                    local textLabel = Instance.new("TextLabel")
+                    textLabel.Size = UDim2.new(1, 0, 1, 0)
+                    textLabel.BackgroundTransparency = 0.5
+                    textLabel.TextColor3 = Color3.new(1, 1, 1)
+                    textLabel.Font = Enum.Font.Gotham -- Reduced to modern readable font
+                    textLabel.TextScaled = false
+                    textLabel.TextSize = 16 -- More appropriate size for better readability
+                    textLabel.TextStrokeTransparency = 0 -- Add outline to text
+                    textLabel.TextStrokeColor3 = Color3.new(0, 0, 0) -- Black outline
+                    textLabel.Text = "HP: " .. math.floor(humanoid.Health) .. " | Distance: " .. math.floor(distance) .. " studs"
+                    textLabel.Parent = billboardGui
+                end
+            end
+        end
+        
+        -- Wait 0.1 seconds before refreshing
+        wait(0.1)
+    end
+end
+
+-- Function to remove highlights and BillboardGuis
+local function deactivatePlayers()
+    running = false
+    for _, item in pairs(highlights) do
+        item:Destroy()
+    end
+    highlights = {}
+end
+
+-- Connect the function to the button click events
+activateButton.MouseButton1Click:Connect(function()
+    if not running then
+        highlightPlayers()
+    end
+end)
+
+deactivateButton.MouseButton1Click:Connect(deactivatePlayers)utton.MouseButton1Click:Connect(deactivatePlayers)
