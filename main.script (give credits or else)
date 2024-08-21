@@ -1,3 +1,5 @@
+--@credits okkf3
+--@credits cheeky92 on youtube
 -- Create the ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PlayerHighlighter"
@@ -56,7 +58,7 @@ local function showNotification()
     subTextLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     subTextLabel.Font = Enum.Font.Gotham -- Smaller modern font
     subTextLabel.TextScaled = true
-    subTextLabel.Text = "Script successfully loaded"
+    subTextLabel.Text = "Your script is loading, please wait"
     subTextLabel.Parent = notification
 
     -- Smooth fade-in and slide-in animation
